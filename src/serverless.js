@@ -1,5 +1,6 @@
 'use strict';
 
+const R = require ('ramda');
 // eslint-disable-next-line import/no-unresolved
 const { Component } = require('@serverless/core');
 const aws = require('@serverless/aws-sdk');
@@ -27,6 +28,19 @@ class AwsIamRole extends Component {
 
     this.state.name = params.name;
     this.state.arn = roleArn;
+
+    if (! R.isNil (inputs.assumeRolePolicy)) {
+      console.log ('Setting assume role policy');
+      const assumeParams = {
+        PolicyDocument: JSON.stringify ({
+          Version: '2012-10-17',
+          Statement: inputs.assumeRolePolicy,
+        }),
+        RoleName: params.name,
+      };
+      const iam = new aws.IAM();
+      await iam.updateAssumeRolePolicy (assumeParams).promise();
+    }
 
     // should we sleep here, or leave that to any component assuming the role?
     // await sleep(15000)
